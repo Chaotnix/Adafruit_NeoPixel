@@ -49,6 +49,10 @@
   #include <time.h>
 #endif
 
+#ifdef TARGET_STM32F1
+  #include <time.h>
+#endif
+
 #if defined(NRF52) || defined(NRF52_SERIES)
 #include "nrf.h"
 
@@ -1851,6 +1855,49 @@ void Adafruit_NeoPixel::show(void) {
 #endif
 
 #elif defined(TARGET_LPC1768)
+  uint8_t  *ptr, *end, p, bitMask;
+  ptr     =  pixels;
+  end     =  ptr + numBytes;
+  p       = *ptr++;
+  bitMask =  0x80;
+
+#ifdef NEO_KHZ400 // 800 KHz check needed only if 400 KHz support enabled
+  if(is800KHz) {
+#endif
+    for(;;) {
+      if(p & bitMask) {
+        // data ONE high
+        // min: 550 typ: 700 max: 5,500
+        gpio_set(pin);
+        time::delay_ns(550);
+        // min: 450 typ: 600 max: 5,000
+        gpio_clear(pin);
+        time::delay_ns(450);
+      } else {
+        // data ZERO high
+        // min: 200  typ: 350 max: 500
+        gpio_set(pin);
+        time::delay_ns(200);
+        // data low
+        // min: 450 typ: 600 max: 5,000
+        gpio_clear(pin);
+        time::delay_ns(450);
+      }
+      if(bitMask >>= 1) {
+        // Move on to the next pixel
+        asm("nop;");
+      } else {
+        if(ptr >= end) break;
+        p       = *ptr++;
+        bitMask = 0x80;
+      }
+    }
+#ifdef NEO_KHZ400
+  } else { // 400 KHz bitstream
+    // ToDo!
+  }
+#endif
+#elif defined(TARGET_STM32F1)
   uint8_t  *ptr, *end, p, bitMask;
   ptr     =  pixels;
   end     =  ptr + numBytes;

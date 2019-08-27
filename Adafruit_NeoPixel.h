@@ -48,6 +48,9 @@
 #ifdef TARGET_LPC1768
   #include <Arduino.h>
 #endif
+#ifdef TARGET_STM32F1
+  #include <Arduino.h>
+#endif
 
 // The order of primary colors in the NeoPixel data stream can vary among
 // device types, manufacturers and even different revisions of the same
